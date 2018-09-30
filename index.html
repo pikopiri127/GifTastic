@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <title>Favorite Sweets</title>
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- Bootstrap CDN-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+    <style type="text/css">
+        body {
+            background-color: blanchedalmond;
+        }
+
+        form,
+        input {
+            margin: 10px 0;
+        }
+
+        #sweets-btn {
+            margin: 5px;
+        }
+
+        #sweets-btn:active {
+            background-color: black;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="row">
+            <!-- Rendered Buttons will get Dumped Here  -->
+            <div class="col-lg-12" id="buttons-view"></div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="row">
+                    <div class="col-lg-8" id="sweets-view">
+                        <!-- Sweets will Get Dumped Here -->
+                    </div>
+                    <div class="col-lg-4">
+                        <form id="sweets-form">
+                            <label for="sweets-input"><b>Add a Sweet!</b></label>
+                            <br>
+                            <input type="text" id="sweets-input" style="width:300px;height:30px;">
+                            <br>
+                            <!-- Button triggers new sweet to be added -->
+                            <input id="add-sweets" type="submit" value="Submit" class="btn btn-success  btn-sm">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        // Initial array of sweets
+        var topic = ["icecream", "chocolate", "cookies"];
+
+        // displaySweetsInfo function re-renders the HTML to display the appropriate content
+        function displaySweetsInfo() {
+
+            var sweets = $(this).attr("data-name");
+
+            // Constructing a URL to search Giphy for the name of the person who said the quote
+            var queryURL = "https://api.giphy.com/v1/gifs/search?q=" +
+                sweets + "&api_key=dc6zaTOxFJmzC&limit=10";
+
+            // Creating an AJAX call for the specific movie button being clicked
+            $.ajax({
+                url: queryURL,
+                method: "GET"
+            }).then(function (response) {
+
+                // Looping through each result item, the page should grab <<10>> static
+                for (var i = 0; i < 10; i++) {
+
+                    // storing the data from the AJAX request in the results variable
+                    var results = response.data[i];
+
+                    // Creating a div for the gif
+                    var sweetsDiv = $("<div>");
+
+                    // Creating a paragraph tag with the result item's rating
+                    var p = $("<p>").text("Rating: " + results.rating);
+
+                    // Creating and storing an image tag
+                    var sweetsImage = $("<img>");
+
+                    // Setting the src attribute of the image to a property pulled off the result item
+                    sweetsImage.attr({
+                        "src": results.images.fixed_height_still.url,
+                        "data-still": results.images.fixed_height_still.url,
+                        "data-animate": results.images.fixed_height.url,
+                        "data-state": "still",
+                        "class": "gif"
+                    });
+
+                    // Appending the paragraph and image tag
+                    sweetsDiv.append(p);
+                    sweetsDiv.append(sweetsImage);
+
+                    // Prependng the sweetsDiv to the HTML page
+                    $("#sweets-view").prepend(sweetsDiv);
+
+                }
+
+                // When the user clicks one of the still GIPHY images, the gif should animate. 
+                // If the user clicks the gif again, it should stop playing.
+                $(".gif").on("click", function () {
+                    var state = $(this).attr("data-state");
+
+                    if (state === "still") {
+                        var newSrc = $(this).attr("data-animate");
+                        $(this).attr("src", newSrc);
+                        $(this).attr("data-state", "animate");
+                    } else {
+                        var newSrc = $(this).attr("data-still");
+                        $(this).attr("src", newSrc);
+                        $(this).attr("data-state", "still");
+                    }
+                });
+            });
+        }
+
+        // Function for displaying sweets butons
+        function renderButtons() {
+
+            // Deleting the sweets prior to adding new sweets
+            // (this is necessary otherwise you will have repeat buttons)
+            $("#buttons-view").empty();
+
+            // Looping through the array of sweets
+            for (var i = 0; i < topic.length; i++) { // Then dynamicaly generating buttons for each sweet in the array
+
+                // This code $("<button>") is all jQuery needs to create the beginning and end tag. (<button></button>)
+                var a = $("<button>");
+
+                // Adding class/class id to buttons
+                a.attr('class', 'btn btn-success  btn-sm');
+                a.attr('id', 'sweets-btn');
+                a.attr('buttonNumber', 'sweets-btn' + i);
+
+                // Adding a data-attribute
+                a.attr("data-name", topic[i]);
+
+                // Providing the initial button text
+                a.text(topic[i]);
+
+                // Adding the button to the buttons-view div
+                $("#buttons-view").append(a);
+            }
+
+            //Initialize input form
+            document.getElementById("sweets-form").reset();
+
+        }
+
+        // This function handles events where a sweet button is clicked
+        $("#add-sweets").on("click", function (event) {
+            event.preventDefault();
+
+            // This line grabs the input from the textbox
+            var sweetsInput = $("#sweets-input").val().trim();
+
+            // Adding sweet from the textbox to our array
+            topic.push(sweetsInput);
+
+            // Calling renderButtons which handles the processing of our movie array
+            renderButtons();
+        });
+
+        // Adding a click event listener to all elements with a class of "sweets-btn"
+        $(document).on("click", "#sweets-btn", displaySweetsInfo);
+
+        // Calling the renderButtons function to display the intial buttons
+        renderButtons();
+
+    </script>
+
+
+</body>
+
+</html>
